@@ -273,7 +273,7 @@ class FakeApiCest
     public function expectQueryParameter(ServiceGuy $I)
     {
         $I->wantTo('Send Request when expecting a get parameter');
-        $request = new ServerRequest('POST', 'http://example.com?foo=bar',);
+        $request = new ServerRequest('POST', 'http://example.com?foo=bar');
         $expectedRequest = $I->expectApiCall(1)->withQueryParameter('foo', 'bar');
         $expectedResponse = $expectedRequest->willReturn(new Response(222))->getDefinedResponse();
         $I->initFakeServer();
@@ -283,7 +283,7 @@ class FakeApiCest
     public function expectMultipleQueryParameter(ServiceGuy $I)
     {
         $I->wantTo('Send Request when expecting multiple get parameters');
-        $request = new ServerRequest('POST', 'http://example.com?foo=bar&bar=foo',);
+        $request = new ServerRequest('POST', 'http://example.com?foo=bar&bar=foo');
         $expectedRequest = $I->expectApiCall(1)->withQueryParameter('foo', 'bar')->withQueryParameter('bar', 'foo');
         $expectedResponse = $expectedRequest->willReturn(new Response(222))->getDefinedResponse();
         $I->initFakeServer();
@@ -293,7 +293,7 @@ class FakeApiCest
     public function expectMultipleQueryParameterShouldFail(ServiceGuy $I)
     {
         $I->wantTo('Send Request when expecting multiple get parameters');
-        $request = new ServerRequest('POST', 'http://example.com?foo=bar&bar=foo',);
+        $request = new ServerRequest('POST', 'http://example.com?foo=bar&bar=foo');
         $expectedRequest = $I->expectApiCall(1)->withQueryParameter('foo', 'bar')->withQueryParameter('baz', 'foo');
         $expectedResponse = $expectedRequest->willReturn(new Response(222))->getDefinedResponse();
         $I->initFakeServer();
@@ -303,7 +303,7 @@ class FakeApiCest
     public function expectQueryParameterShouldFail(ServiceGuy $I)
     {
         $I->wantTo('Send Request when expecting a get parameter should fail');
-        $request = new ServerRequest('POST', 'http://example.com?foo=bar',);
+        $request = new ServerRequest('POST', 'http://example.com?foo=bar');
         $expectedRequest = $I->expectApiCall(1)->withQueryParameter('baz', 'bar');
         $expectedResponse = $expectedRequest->willReturn(new Response(222))->getDefinedResponse();
         $I->initFakeServer();
@@ -313,7 +313,7 @@ class FakeApiCest
     public function expectMethod(ServiceGuy $I)
     {
         $I->wantTo('Send Request when expecting a given http method');
-        $request = new ServerRequest('POST', 'http://example.com',);
+        $request = new ServerRequest('POST', 'http://example.com');
         $expectedRequest = $I->expectApiCall(1)->withMethod('POST');
         $expectedResponse = $expectedRequest->willReturn(new Response(222))->getDefinedResponse();
         $I->initFakeServer();
@@ -323,7 +323,7 @@ class FakeApiCest
     public function expectMethodShouldFail(ServiceGuy $I)
     {
         $I->wantTo('Send Request when expecting a given http method should fail');
-        $request = new ServerRequest('GET', 'http://example.com',);
+        $request = new ServerRequest('GET', 'http://example.com');
         $expectedRequest = $I->expectApiCall(1)->withMethod('POST');
         $expectedResponse = $expectedRequest->willReturn(new Response(222))->getDefinedResponse();
         $I->initFakeServer();
@@ -333,7 +333,7 @@ class FakeApiCest
     public function expectQueryParameters(ServiceGuy $I)
     {
         $I->wantTo('Send Request when expecting a get parameters');
-        $request = new ServerRequest('POST', 'http://example.com?foo=bar&bar=foo',);
+        $request = new ServerRequest('POST', 'http://example.com?foo=bar&bar=foo');
         $expectedRequest = $I->expectApiCall(1)->withQueryParameters(['foo' => 'bar', 'bar' => 'foo']);
         $expectedResponse = $expectedRequest->willReturn(new Response(222))->getDefinedResponse();
         $I->initFakeServer();
@@ -345,7 +345,7 @@ class FakeApiCest
     public function expectQueryParametersShouldFail(ServiceGuy $I)
     {
         $I->wantTo('Send Request when expecting a get parameters should fail');
-        $request = new ServerRequest('POST', 'http://example.com?foo=bar&bar=foo',);
+        $request = new ServerRequest('POST', 'http://example.com?foo=bar&bar=foo');
         $expectedRequest = $I->expectApiCall(1)->withQueryParameters(['foo' => 'bar', 'bar' => 'foo', 'baz' => 'bar']);
         $expectedResponse = $expectedRequest->willReturn(new Response(222))->getDefinedResponse();
         $I->initFakeServer();
@@ -358,7 +358,7 @@ class FakeApiCest
     public function expectCallback(ServiceGuy $I)
     {
         $I->wantTo('Send Request when expecting validation with callback');
-        $request = new ServerRequest('POST', 'http://example.com?foo=bar&bar=foo',);
+        $request = new ServerRequest('POST', 'http://example.com?foo=bar&bar=foo');
         $expectedRequest = $I->expectApiCall(1)->withCallback(function (ServerRequestInterface $request) {
             $parameter = 'foo';
             $value = 'bar';
@@ -376,7 +376,7 @@ class FakeApiCest
     public function expectCallbackShouldFail(ServiceGuy $I)
     {
         $I->wantTo('Send Request when expecting validation with callback should fail');
-        $request = new ServerRequest('POST', 'http://example.com?baz=bar',);
+        $request = new ServerRequest('POST', 'http://example.com?baz=bar');
         $expectedRequest = $I->expectApiCall(1)->withCallback(function (ServerRequestInterface $request) {
             $parameter = 'foo';
             $value = 'bar';
@@ -603,7 +603,6 @@ class FakeApiCest
     public function startEchoService(ServiceGuy $I)
     {
         $I->wantTo('Start Echo service');
-        xdebug_break();
         $I->createEchoUpstream(8081);
         $echoUrl = $I->grabEchoServiceUrl();
 
