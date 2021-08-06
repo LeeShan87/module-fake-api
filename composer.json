@@ -17,7 +17,7 @@
         }
     ],
     "require": {
-        "php": ">=5.5",
+        "php": ">=7.1",
         "react/event-loop": "~1.0",
         "react/http": "~1.0",
         "codeception/codeception": "^4.0",
