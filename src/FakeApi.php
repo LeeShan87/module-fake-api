@@ -192,7 +192,7 @@ class FakeApi extends \Codeception\Module
         $this->lastResponse = null;
         $this->proxiedRequests = [];
         $this->proxiedResponses = [];
-        $this->upstreamUrl = $this->upstreamUrl ?? $this->config['upstreamUrl'];
+        $this->upstreamUrl = !is_null($this->upstreamUrl) ? $this->upstreamUrl : $this->config['upstreamUrl'];
     }
     /**
      * Initialize FakeApi Server
