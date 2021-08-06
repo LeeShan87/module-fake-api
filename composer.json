@@ -1,0 +1,37 @@
+{
+    "name": "leeshan87/module-fake-api",
+    "description": "Asynchronous Fake Api module for Codeception",
+    "keywords": [
+        "codeception",
+        "async",
+        "testing",
+        "ReactPHP"
+    ],
+    "homepage": "https://github.com/LeeShan87/module-fake-api",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Zoltan Toma",
+            "email": "leeshan87@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.5",
+        "react/event-loop": "~1.0",
+        "react/http": "~1.0",
+        "codeception/codeception": "^4.0",
+        "leeshan87/reactphp-multi-loop": "~0.1",
+        "codeception/module-asserts": "^1.0.0"
+    },
+    "require-dev": {},
+    "suggest": {},
+    "autoload": {
+        "classmap": [
+            "src/"
+        ]
+    },
+    "config": {
+        "classmap-authoritative": true
+    }
+}

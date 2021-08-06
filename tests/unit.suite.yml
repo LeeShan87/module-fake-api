@@ -1,0 +1,5 @@
+actor: ServiceGuy
+modules:
+    enabled:
+        - Asserts
+        - FakeApi
