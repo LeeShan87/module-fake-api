@@ -17,14 +17,16 @@
         }
     ],
     "require": {
-        "php": ">=7.1",
+        "php": ">=5.6",
         "react/event-loop": "~1.0",
         "react/http": "~1.0",
         "codeception/codeception": "^4.0",
         "leeshan87/reactphp-multi-loop": "~0.1",
         "codeception/module-asserts": "^1.0.0"
     },
-    "require-dev": {},
+    "require-dev": {
+        "overtrue/phplint": "~2.4.1"
+    },
     "suggest": {},
     "autoload": {
         "classmap": [
