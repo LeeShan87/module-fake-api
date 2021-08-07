@@ -339,14 +339,13 @@ class FakeApi extends \Codeception\Module
             },
         ];
         $middlewares = array_merge($middlewares, $this->getExpectedRequests());
-        $middlewares[] =
-            function (ServerRequestInterface  $request, $next) {
-                if (is_null($this->upstreamUrl)) {
-                    return $next($request);
-                }
-                $this->_log("Proxy requests to [{$this->upstreamUrl}]");
-                return $this->proxyRequest($request);
-            };
+        $middlewares[] = function (ServerRequestInterface  $request, $next) {
+            if (is_null($this->upstreamUrl)) {
+                return $next($request);
+            }
+            $this->_log("Proxy requests to [{$this->upstreamUrl}]");
+            return $this->proxyRequest($request);
+        };
         $middlewares[] = function (ServerRequestInterface  $request, $next) {
             if (!$this->hasDefinedResponses) {
                 return $next($request);

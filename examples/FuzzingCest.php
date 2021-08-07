@@ -2,7 +2,7 @@
 
 use React\Http\Message\Response;
 
-class FuzzingCest extends BaseCest
+class FuzzingCest
 {
     // Response altering tests
     public function testAddAlteredResponse(ServiceGuy $I)
@@ -43,7 +43,7 @@ class FuzzingCest extends BaseCest
 
     public function testWillAlteredResponse(ServiceGuy $I)
     {
-        $I->wantTo('add altered responses when a request arrive');
+        $I->wantTo('Add altered responses when a request arrive');
         $middleware = $I->expectApiCall(0)->withUrl('/hello');
         $middleware->willAlterResponse()->then(function ($response) use ($I, $middleware) {
             $alteredResponse = $response->withStatus(220)->withAddedHeader('message', 'hello');
@@ -85,7 +85,7 @@ class FuzzingCest extends BaseCest
 
     public function testWillAlteredResponseStepByStep(ServiceGuy $I)
     {
-        $I->wantTo('add altered responses when a request arrive step by step');
+        $I->wantTo('Add altered responses when a request arrive step by step');
         $middleware = $I->expectApiCall(0)->withUrl('/hello');
         $middleware->willAlterResponse()->then(function ($response) use ($I, $middleware) {
             $alteredResponse = $response->withStatus(220)->withAddedHeader('message', 'hello');
