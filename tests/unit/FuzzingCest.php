@@ -41,6 +41,29 @@ class FuzzingCest extends BaseCest
         $I->stopFakeApi();
     }
 
+    public function testWillGrabResponse(ServiceGuy $I)
+    {
+        $I->wantTo('grab responses when a request arrive');
+        $middleware = $I->expectApiCall(0)->withUrl('/hello');
+        $middleware->willAlterResponse()->then(function ($response) use ($I, $middleware) {
+            $I->assertNotNull($response);
+            $I->assertEquals(404, $response->getStatusCode());
+        });
+        // Responses are cloned inside the object. We must prepare the altered response before adding it.
+        $I->initFakeServer();
+        $I->sendRequest();
+        $I->waitTillNextRequestResolves();
+        $response = $I->grabLastResponse();
+        $I->assertNotNull($response);
+        $I->assertEquals(404, $response->getStatusCode());
+
+        $I->sendRequest('GET', '/hello');
+        $I->waitTillNextRequestResolves();
+        $response = $I->grabLastResponse();
+        $I->assertEquals(404, $response->getStatusCode());
+        $I->stopFakeApi();
+    }
+
     public function testWillAlteredResponse(ServiceGuy $I)
     {
         $I->wantTo('add altered responses when a request arrive');
