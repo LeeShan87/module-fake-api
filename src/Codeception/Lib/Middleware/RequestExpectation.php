@@ -71,13 +71,6 @@ class RequestExpectation
         return $this;
     }
     /**
-     * @return int
-     */
-    public function getExpectedInvocationCount()
-    {
-        return $this->expectedInvocationCount;
-    }
-    /**
      * Verify if the middleware has invoked at least expected count.
      *
      * @throws \PHPUnit\Framework\ExpectationFailedException
@@ -142,27 +135,7 @@ class RequestExpectation
         $this->responseDeferred = $deferred;
         return $deferred->promise();
     }
-    /**
-     * @return ServerRequestInterface
-     */
-    public function getRequest()
-    {
-        return $this->request;
-    }
-    /**
-     * @return Deferred
-     */
-    public function getResponseDeferred()
-    {
-        return $this->responseDeferred;
-    }
-    /**
-     * @return PromiseInterface
-     */
-    public function getResponsePromise()
-    {
-        return $this->responsePromise;
-    }
+
     /**
      * @param ServerRequestInterface $request
      * @return self
@@ -197,7 +170,9 @@ class RequestExpectation
         foreach ($this->validationRules as $method => $values) {
             $validator = 'validate' . ucfirst($method);
             if (!method_exists($this, $validator)) {
+                // @codeCoverageIgnoreStart
                 throw new RuntimeException("Validator method [$validator] does not exists");
+                // @codeCoverageIgnoreEnd
             }
             foreach ($values as $value) {
                 if (!$this->$validator($request, $value)) {
@@ -238,7 +213,7 @@ class RequestExpectation
      * @param string $body
      * @return self
      */
-    public function willReturnResponse($status,  $headers,  $body)
+    public function willReturnResponse($status = 200,  $headers = [],  $body = '')
     {
         return $this->willReturn(new Response($status, $headers, $body));
     }
@@ -248,7 +223,7 @@ class RequestExpectation
      * @param array $body
      * @return self
      */
-    public function willReturnJsonResponse($status,  $headers,  $body)
+    public function willReturnJsonResponse($status = 200,  $headers = [],  $body = [])
     {
         $jsonBody = json_encode($body);
 
@@ -271,17 +246,6 @@ class RequestExpectation
     public function getDefinedResponse()
     {
         return $this->response;
-    }
-    /**
-     * @return PromiseInterface
-     */
-    public function willGrabResponse()
-    {
-        $responseDeferred = new Deferred();
-        $this->responseDeferred = $responseDeferred;
-        $promise = $responseDeferred->promise();
-        $this->responsePromise = $promise;
-        return $promise;
     }
 
     /**
@@ -495,4 +459,36 @@ class RequestExpectation
     {
         return $expected($requests);
     }
+
+    // @codeCoverageIgnoreStart
+    /**
+     * @return int
+     */
+    public function getExpectedInvocationCount()
+    {
+        return $this->expectedInvocationCount;
+    }
+
+    /**
+     * @return ServerRequestInterface
+     */
+    public function getRequest()
+    {
+        return $this->request;
+    }
+    /**
+     * @return Deferred
+     */
+    public function getResponseDeferred()
+    {
+        return $this->responseDeferred;
+    }
+    /**
+     * @return PromiseInterface
+     */
+    public function getResponsePromise()
+    {
+        return $this->responsePromise;
+    }
+    // @codeCoverageIgnoreEnd
 }

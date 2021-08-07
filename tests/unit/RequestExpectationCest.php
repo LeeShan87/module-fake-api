@@ -7,6 +7,26 @@ use RingCentral\Psr7\ServerRequest;
 
 class RequestExpectationCest extends BaseCest
 {
+    public function expectNothingMatch(ServiceGuy $I)
+    {
+        $I->wantTo('See when nothing match next request middle will serve');
+        $request = new ServerRequest('POST', 'http://example.com/some/url');
+        $expectedRequest = $I->expectApiCall(0);
+        $I->initFakeServer();
+        $I->sendMockedRequest($request);
+        $this->_validateRequest($I, $request);
+    }
+
+    public function expectNothingMatchExpectationFail(ServiceGuy $I)
+    {
+        $I->wantTo('See when nothing match next request middle will serve but exteding match');
+        $request = new ServerRequest('POST', 'http://example.com/some/url');
+        $expectedRequest = $I->expectApiCall(1);
+        $I->initFakeServer();
+        $I->sendMockedRequest($request);
+        $this->_validateRequestExpectationFailed($I, $request);
+    }
+
     public function expectsUriWithoutResponse(ServiceGuy $I)
     {
         $I->wantTo('Send Request when expecting a url without defined response');
@@ -55,7 +75,7 @@ class RequestExpectationCest extends BaseCest
         $I->wantTo('Send Request when expecting a url');
         $request = new ServerRequest('POST', 'http://example.com/some/url');
         $expectedRequest = $I->expectApiCall(1)->withUrl('/some/url');
-        $expectedResponse = $expectedRequest->willReturn(new Response(222))->getDefinedResponse();
+        $expectedResponse = $expectedRequest->willReturnResponse(222)->getDefinedResponse();
         $I->initFakeServer();
         $I->sendMockedRequest($request);
         $this->_validateRequestWithResponse($I, $request, $expectedResponse);

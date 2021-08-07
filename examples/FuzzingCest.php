@@ -2,7 +2,7 @@
 
 use React\Http\Message\Response;
 
-class FuzzingCest extends BaseCest
+class FuzzingCest
 {
     // Response altering tests
     public function testAddAlteredResponse(ServiceGuy $I)
@@ -41,32 +41,9 @@ class FuzzingCest extends BaseCest
         $I->stopFakeApi();
     }
 
-    public function testWillGrabResponse(ServiceGuy $I)
-    {
-        $I->wantTo('grab responses when a request arrive');
-        $middleware = $I->expectApiCall(0)->withUrl('/hello');
-        $middleware->willAlterResponse()->then(function ($response) use ($I, $middleware) {
-            $I->assertNotNull($response);
-            $I->assertEquals(404, $response->getStatusCode());
-        });
-        // Responses are cloned inside the object. We must prepare the altered response before adding it.
-        $I->initFakeServer();
-        $I->sendRequest();
-        $I->waitTillNextRequestResolves();
-        $response = $I->grabLastResponse();
-        $I->assertNotNull($response);
-        $I->assertEquals(404, $response->getStatusCode());
-
-        $I->sendRequest('GET', '/hello');
-        $I->waitTillNextRequestResolves();
-        $response = $I->grabLastResponse();
-        $I->assertEquals(404, $response->getStatusCode());
-        $I->stopFakeApi();
-    }
-
     public function testWillAlteredResponse(ServiceGuy $I)
     {
-        $I->wantTo('add altered responses when a request arrive');
+        $I->wantTo('Add altered responses when a request arrive');
         $middleware = $I->expectApiCall(0)->withUrl('/hello');
         $middleware->willAlterResponse()->then(function ($response) use ($I, $middleware) {
             $alteredResponse = $response->withStatus(220)->withAddedHeader('message', 'hello');
@@ -108,7 +85,7 @@ class FuzzingCest extends BaseCest
 
     public function testWillAlteredResponseStepByStep(ServiceGuy $I)
     {
-        $I->wantTo('add altered responses when a request arrive step by step');
+        $I->wantTo('Add altered responses when a request arrive step by step');
         $middleware = $I->expectApiCall(0)->withUrl('/hello');
         $middleware->willAlterResponse()->then(function ($response) use ($I, $middleware) {
             $alteredResponse = $response->withStatus(220)->withAddedHeader('message', 'hello');
