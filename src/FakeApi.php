@@ -380,7 +380,13 @@ class FakeApi extends \Codeception\Module
             MultiLoop::tickAll();
         }
     }
-    public function waitTillNextRequestResolves(int $seconds = 20)
+
+    /**
+     *
+     * @param integer $seconds
+     * @return void
+     */
+    public function waitTillNextRequestResolves($seconds = 20)
     {
         $startTime = time();
         $maxExecutionTime = $startTime + $seconds;
@@ -389,7 +395,12 @@ class FakeApi extends \Codeception\Module
             MultiLoop::tickAll();
         }
     }
-    public function waitTillAllRequestsResolved(int $maxDelay = 20)
+    /**
+     *
+     * @param integer $maxDelay
+     * @return void
+     */
+    public function waitTillAllRequestsResolved($maxDelay = 20)
     {
         $waits = 0;
         foreach ($this->currentMiddlewares as $middleware) {
@@ -608,7 +619,7 @@ class FakeApi extends \Codeception\Module
      * @param integer $port
      * @return void
      */
-    public function setBindPort(int $port = 8080)
+    public function setBindPort($port = 8080)
     {
         $this->bind = $port;
     }
