@@ -3,6 +3,7 @@
 use Codeception\Module\ReactHelper;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Message\Response;
+use RingCentral\Psr7\Response as PSRResponse;
 use React\Promise\Deferred;
 use RingCentral\Psr7\ServerRequest;
 
@@ -31,7 +32,10 @@ class FakeApiCest
         if ($grabbedResponse instanceof Response) {
             $I->assertEquals(404, $grabbedResponse->getStatusCode());
         }
-        if (!$grabbedResponse instanceof Response) {
+        if ($grabbedResponse instanceof PSRResponse) {
+            $I->assertEquals(404, $grabbedResponse->getStatusCode());
+        }
+        if ($grabbedResponse instanceof Exception) {
             $I->assertInstanceOf(\Exception::class, $grabbedResponse);
         }
         if (!is_null($request)) {
@@ -97,18 +101,21 @@ class FakeApiCest
         $I->assertEmpty($I->grabProxiedResponses());
     }
     // tests
-    public function sendMockedRequestWhenUpstreamEnabledShouldTimeout(ServiceGuy $I)
+    public function sendMockedRequestWhenUpstreamEnabled(ServiceGuy $I)
     {
+        // Todo: Move Upstream tests to a separate test class
+        // Todo: Timeouts should be tested too.
         $I->wantTo('Send Request when upstream enabled');
-        $I->setUpstreamUrl('http://127.0.0.1:33333');
-        //$I->setUpstreamUrl('http://example.com');
+        $I->createEchoUpstream(33333);
+        $I->setUpstreamUrl($I->grabEchoServiceUrl());
         $I->initFakeServer();
         $I->assertNull($I->grabLastRequest());
         $I->assertNull($I->grabLastResponse());
         $request = new ServerRequest('POST', 'http://example.com/safasasdfas');
         $I->sendMockedRequest($request);
         $I->waitTillNextRequestResolves(20);
-        $this->_validateRequest($I, $request);
+        $I->stopEchoUpstream();
+        $this->_validateRequestWithResponse($I, $request, new Response(200));
         $I->assertNotEmpty($I->grabProxiedRequests());
         $I->assertNotEmpty($I->grabProxiedResponses());
     }

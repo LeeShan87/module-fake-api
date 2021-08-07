@@ -28,7 +28,7 @@ jobs:
       run: composer install --prefer-dist --no-progress --no-interaction --no-suggest
 
     - name: Run Lint
-      run: php vendor/bin/phplint --no-cache --no-interaction || echo "Lint failed"
+      run: php vendor/bin/phplint --no-cache --no-interaction"
 
     - name: Run test suite
-      run: php vendor/bin/codecept run --no-exit
+      run: php vendor/bin/codecept run
