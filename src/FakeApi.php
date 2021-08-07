@@ -481,7 +481,7 @@ class FakeApi extends \Codeception\Module
      * @param string $content
      * @return void
      */
-    public function addMessage(int $status, array $headers, $content)
+    public function addMessage($status,  $headers, $content)
     {
         $this->hasDefinedResponses = true;
         $this->messages[] = new Response(
@@ -520,7 +520,7 @@ class FakeApi extends \Codeception\Module
      * @param integer|null $sec
      * @return void
      */
-    public function recordRequestsForSeconds(int $sec = null)
+    public function recordRequestsForSeconds($sec = null)
     {
         $this->recordingStartTime = time();
         $recordInterval = $sec ?: $this->config['recordInterval'];
@@ -540,7 +540,7 @@ class FakeApi extends \Codeception\Module
      * @param string $body
      * @return PromiseInterface
      */
-    public function sendRequest(string $method = 'GET', string $url = '/', array $headers = [], string $body = '')
+    public function sendRequest($method = 'GET',  $url = '/',  $headers = [],  $body = '')
     {
         $loop = \React\EventLoop\Factory::create();
         MultiLoop::addLoop($loop, 'client');
@@ -558,7 +558,7 @@ class FakeApi extends \Codeception\Module
      * @param array $body
      * @return PromiseInterface
      */
-    public function sendJsonRequest(string $method = 'GET', string $url = '/', array $headers = [], array $body = [])
+    public function sendJsonRequest($method = 'GET',  $url = '/',  $headers = [],  $body = [])
     {
         return $this->sendRequest(
             $method,
@@ -579,7 +579,12 @@ class FakeApi extends \Codeception\Module
         $this->socket->emit('connection', [$this->mockedConnection]);
         $this->mockedConnection->emit('data', [str($serverRequest)]);
     }
-    public function sendMockedRequestRaw(string $string)
+    /**
+     *
+     * @param string $string
+     * @return void
+     */
+    public function sendMockedRequestRaw($string)
     {
         $this->_log("Sending raw mocked request:\n"  . $string);
         $this->socket->emit('connection', [$this->mockedConnection]);
@@ -611,7 +616,7 @@ class FakeApi extends \Codeception\Module
      * @param string $url
      * @return void
      */
-    public function setUpstreamUrl(string $url)
+    public function setUpstreamUrl($url)
     {
         $this->upstreamUrl = $url;
     }
@@ -627,7 +632,7 @@ class FakeApi extends \Codeception\Module
      * @param integer $sec
      * @return void
      */
-    public function setRecordInterval(int $sec)
+    public function setRecordInterval($sec)
     {
         $this->recordInterval = $sec;
     }
