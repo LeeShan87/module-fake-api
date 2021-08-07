@@ -1,5 +1,7 @@
 <?php
 
+namespace Codeception\Lib\Middleware;
+
 use PHPUnit\Framework\Assert;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Message\Response;
@@ -14,7 +16,7 @@ use RingCentral\Psr7\ServerRequest;
  * PHPUnit expects feature is made for function invocation. With this class we can manually count the http endpoint invocation.
  * And if the counter is not at least equals the expected invocation counter, than the test should fail.
  */
-class FakeApiRequestMiddleware
+class RequestExpectation
 {
     /**
      * @var Response

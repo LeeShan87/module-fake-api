@@ -2,9 +2,9 @@
 
 namespace Codeception\Module;
 
+use Codeception\Lib\Middleware\RequestExpectation;
 use Codeception\Test\Cest;
 use Codeception\Util\Stub;
-use FakeApiRequestMiddleware;
 use LeeShan87\React\MultiLoop\MultiLoop;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -404,7 +404,7 @@ class FakeApi extends \Codeception\Module
     {
         $waits = 0;
         foreach ($this->currentMiddlewares as $middleware) {
-            if ($middleware instanceof FakeApiRequestMiddleware) {
+            if ($middleware instanceof RequestExpectation) {
                 $waits += $middleware->getExpectedInvocationCount();
             }
         }
@@ -771,18 +771,18 @@ class FakeApi extends \Codeception\Module
         $this->upstreamUrl = null;
         $this->expectedRequests = [];
         foreach ($this->currentMiddlewares as $middleware) {
-            if ($middleware instanceof FakeApiRequestMiddleware) {
+            if ($middleware instanceof RequestExpectation) {
                 $middleware->verify();
             }
         }
     }
     /**
      * @param int $count
-     * @return \FakeApiRequestMiddleware
+     * @return RequestExpectation
      */
     public function expectApiCall($count)
     {
-        $middleware = (new FakeApiRequestMiddleware())->setExpectedInvocationCount($count);
+        $middleware = (new RequestExpectation())->setExpectedInvocationCount($count);
         $this->expectedRequests[] = $middleware;
         return $middleware;
     }
