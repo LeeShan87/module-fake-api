@@ -21,7 +21,7 @@ class FakeApiCest
         }
     }
     // helper functions
-    public function _validateRequest(ServiceGuy $I, ?ServerRequest $request = null)
+    public function _validateRequest(ServiceGuy $I, ServerRequest $request = null)
     {
         $I->stopFakeApi();
         $grabbedRequest = $I->grabLastRequest();
@@ -39,7 +39,7 @@ class FakeApiCest
             $I->assertEquals($request->getUri()->getHost(), $grabbedRequest->getUri()->getHost());
         }
     }
-    public function _validateRequestWithResponse(ServiceGuy $I, ?ServerRequest $request = null, ?Response $response = null)
+    public function _validateRequestWithResponse(ServiceGuy $I, ServerRequest $request = null, Response $response = null)
     {
         try {
             $I->stopFakeApi();
@@ -61,7 +61,7 @@ class FakeApiCest
             $I->assertEquals($response->getStatusCode(), $grabbedResponse->getStatusCode());
         }
     }
-    public function _validateRequestExpectationFailed(ServiceGuy $I, ?ServerRequest $request = null)
+    public function _validateRequestExpectationFailed(ServiceGuy $I, ServerRequest $request = null)
     {
         try {
             $I->stopFakeApi();

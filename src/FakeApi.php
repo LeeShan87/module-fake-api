@@ -509,7 +509,7 @@ class FakeApi extends \Codeception\Module
      * @param integer|null $sec
      * @return void
      */
-    public function recordRequestsForSeconds(?int $sec = null)
+    public function recordRequestsForSeconds(int $sec = null)
     {
         $this->recordingStartTime = time();
         $recordInterval = $sec ?: $this->config['recordInterval'];
@@ -529,7 +529,7 @@ class FakeApi extends \Codeception\Module
      * @param string $body
      * @return PromiseInterface
      */
-    public function sendRequest(string $method = 'GET', string $url = '/', ?array $headers = [], string $body = '')
+    public function sendRequest(string $method = 'GET', string $url = '/', array $headers = [], string $body = '')
     {
         $loop = \React\EventLoop\Factory::create();
         MultiLoop::addLoop($loop, 'client');
@@ -547,7 +547,7 @@ class FakeApi extends \Codeception\Module
      * @param array $body
      * @return PromiseInterface
      */
-    public function sendJsonRequest(string $method = 'GET', string $url = '/', ?array $headers = [], array $body = [])
+    public function sendJsonRequest(string $method = 'GET', string $url = '/', array $headers = [], array $body = [])
     {
         return $this->sendRequest(
             $method,

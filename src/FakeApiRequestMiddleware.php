@@ -102,7 +102,7 @@ class FakeApiRequestMiddleware
             if (!empty($this->alteredResponses)) {
                 $response = array_shift($this->alteredResponses);
             }
-            $response = $response ?? $next($request);
+            $response = !is_null($response) ? $response : $next($request);
             if (!$this->responseDeferredResolved) {
                 $doneDeferred = new Deferred();
                 $this->responseDeferred->resolve($response);
