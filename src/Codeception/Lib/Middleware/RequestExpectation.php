@@ -1,5 +1,7 @@
 <?php
 
+namespace Codeception\Lib\Middleware;
+
 use PHPUnit\Framework\Assert;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Message\Response;
@@ -14,7 +16,7 @@ use RingCentral\Psr7\ServerRequest;
  * PHPUnit expects feature is made for function invocation. With this class we can manually count the http endpoint invocation.
  * And if the counter is not at least equals the expected invocation counter, than the test should fail.
  */
-class FakeApiRequestMiddleware
+class RequestExpectation
 {
     /**
      * @var Response
@@ -69,13 +71,6 @@ class FakeApiRequestMiddleware
         return $this;
     }
     /**
-     * @return int
-     */
-    public function getExpectedInvocationCount()
-    {
-        return $this->expectedInvocationCount;
-    }
-    /**
      * Verify if the middleware has invoked at least expected count.
      *
      * @throws \PHPUnit\Framework\ExpectationFailedException
@@ -102,7 +97,7 @@ class FakeApiRequestMiddleware
             if (!empty($this->alteredResponses)) {
                 $response = array_shift($this->alteredResponses);
             }
-            $response = $response ?? $next($request);
+            $response = !is_null($response) ? $response : $next($request);
             if (!$this->responseDeferredResolved) {
                 $doneDeferred = new Deferred();
                 $this->responseDeferred->resolve($response);
@@ -140,27 +135,7 @@ class FakeApiRequestMiddleware
         $this->responseDeferred = $deferred;
         return $deferred->promise();
     }
-    /**
-     * @return ServerRequestInterface
-     */
-    public function getRequest()
-    {
-        return $this->request;
-    }
-    /**
-     * @return Deferred
-     */
-    public function getResponseDeferred()
-    {
-        return $this->responseDeferred;
-    }
-    /**
-     * @return PromiseInterface
-     */
-    public function getResponsePromise()
-    {
-        return $this->responsePromise;
-    }
+
     /**
      * @param ServerRequestInterface $request
      * @return self
@@ -174,7 +149,7 @@ class FakeApiRequestMiddleware
      * @param callable $next
      * @return self
      */
-    public function setNext(callable $next)
+    public function setNext($next)
     {
         $this->next = $next;
         return $this;
@@ -195,7 +170,9 @@ class FakeApiRequestMiddleware
         foreach ($this->validationRules as $method => $values) {
             $validator = 'validate' . ucfirst($method);
             if (!method_exists($this, $validator)) {
+                // @codeCoverageIgnoreStart
                 throw new RuntimeException("Validator method [$validator] does not exists");
+                // @codeCoverageIgnoreEnd
             }
             foreach ($values as $value) {
                 if (!$this->$validator($request, $value)) {
@@ -211,7 +188,7 @@ class FakeApiRequestMiddleware
      * @param mixed $expected
      * @return self
      */
-    protected function with(string $rule, $expected)
+    protected function with($rule, $expected)
     {
         if (!isset($this->validationRules[$rule])) {
             $this->validationRules[$rule] = [];
@@ -236,7 +213,7 @@ class FakeApiRequestMiddleware
      * @param string $body
      * @return self
      */
-    public function willReturnResponse(int $status, array $headers, string $body)
+    public function willReturnResponse($status = 200,  $headers = [],  $body = '')
     {
         return $this->willReturn(new Response($status, $headers, $body));
     }
@@ -246,7 +223,7 @@ class FakeApiRequestMiddleware
      * @param array $body
      * @return self
      */
-    public function willReturnJsonResponse(int $status, array $headers, array $body)
+    public function willReturnJsonResponse($status = 200,  $headers = [],  $body = [])
     {
         $jsonBody = json_encode($body);
 
@@ -270,17 +247,6 @@ class FakeApiRequestMiddleware
     {
         return $this->response;
     }
-    /**
-     * @return PromiseInterface
-     */
-    public function willGrabResponse()
-    {
-        $responseDeferred = new Deferred();
-        $this->responseDeferred = $responseDeferred;
-        $promise = $responseDeferred->promise();
-        $this->responsePromise = $promise;
-        return $promise;
-    }
 
     /**
      * Helper function to debug log messages
@@ -298,7 +264,7 @@ class FakeApiRequestMiddleware
      * @param string $string
      * @return self
      */
-    public function withUrl(string $string)
+    public function withUrl($string)
     {
         return $this->with('url', $string);
     }
@@ -307,7 +273,7 @@ class FakeApiRequestMiddleware
      * @param string $expected
      * @return boolean
      */
-    protected function validateUrl(ServerRequestInterface $requests, string $expected)
+    protected function validateUrl(ServerRequestInterface $requests,  $expected)
     {
         $url = $requests->getUri()->getPath();
         return $expected === $url;
@@ -317,7 +283,7 @@ class FakeApiRequestMiddleware
      * @param string $value
      * @return self
      */
-    public function withQueryParameter(string $parameter, string $value)
+    public function withQueryParameter($parameter,  $value)
     {
         return $this->with('queryParameter', [$parameter, $value]);
     }
@@ -326,7 +292,7 @@ class FakeApiRequestMiddleware
      * @param array $expected
      * @return void
      */
-    protected function validateQueryParameter(ServerRequestInterface $requests, array $expected)
+    protected function validateQueryParameter(ServerRequestInterface $requests,  $expected)
     {
         $getParams = $requests->getQueryParams();
         list($parameter, $value) = $expected;
@@ -336,7 +302,7 @@ class FakeApiRequestMiddleware
      * @param array $queryParameters
      * @return self
      */
-    public function withQueryParameters(array $queryParameters)
+    public function withQueryParameters($queryParameters)
     {
         return $this->with('queryParameters', $queryParameters);
     }
@@ -345,7 +311,7 @@ class FakeApiRequestMiddleware
      * @param array $expected
      * @return boolean
      */
-    protected function validateQueryParameters(ServerRequestInterface $requests, array $expected)
+    protected function validateQueryParameters(ServerRequestInterface $requests,  $expected)
     {
         $getParams = $requests->getQueryParams();
         return $expected === $getParams;
@@ -355,7 +321,7 @@ class FakeApiRequestMiddleware
      * @param string $value
      * @return self
      */
-    public function withHeader(string $header, string $value)
+    public function withHeader($header,  $value)
     {
         return $this->with('header', [$header, $value]);
     }
@@ -364,7 +330,7 @@ class FakeApiRequestMiddleware
      * @param array $expected
      * @return boolean
      */
-    protected function validateHeader(ServerRequestInterface $requests, array $expected)
+    protected function validateHeader(ServerRequestInterface $requests,  $expected)
     {
         list($headerName, $value) = $expected;
         $header = $requests->getHeader($headerName);
@@ -374,7 +340,7 @@ class FakeApiRequestMiddleware
      * @param array $headers
      * @return self
      */
-    public function withHeaders(array $headers)
+    public function withHeaders($headers)
     {
         return $this->with('headers', (new ServerRequest('GET', '', $headers))->getHeaders());
     }
@@ -383,7 +349,7 @@ class FakeApiRequestMiddleware
      * @param array $expected
      * @return boolean
      */
-    protected function validateHeaders(ServerRequestInterface $requests, array $expected)
+    protected function validateHeaders(ServerRequestInterface $requests,  $expected)
     {
         $headers = $requests->getHeaders();
         return $expected === $headers;
@@ -393,7 +359,7 @@ class FakeApiRequestMiddleware
      * @param string $value
      * @return self
      */
-    public function withBodyParameter(string $parameter, string $value)
+    public function withBodyParameter($parameter,  $value)
     {
         return $this->with('bodyParameter', [$parameter, $value]);
     }
@@ -402,7 +368,7 @@ class FakeApiRequestMiddleware
      * @param array $expected
      * @return boolean
      */
-    protected function validateBodyParameter(ServerRequestInterface $requests, array $expected)
+    protected function validateBodyParameter(ServerRequestInterface $requests,  $expected)
     {
         list($parameter, $value) = $expected;
         $body = $requests->getParsedBody();
@@ -412,11 +378,11 @@ class FakeApiRequestMiddleware
      * @param array $body
      * @return self
      */
-    public function withBodyParameters(array $body)
+    public function withBodyParameters($body)
     {
         return $this->with('bodyParameters', $body);
     }
-    protected function validateBodyParameters(ServerRequestInterface $requests, array $expected)
+    protected function validateBodyParameters(ServerRequestInterface $requests,  $expected)
     {
         return $expected === $requests->getParsedBody();
     }
@@ -425,7 +391,7 @@ class FakeApiRequestMiddleware
      * @param string $value
      * @return self
      */
-    public function withJsonBodyParameter(string $parameter, string $value)
+    public function withJsonBodyParameter($parameter,  $value)
     {
         return $this->with('jsonBodyParameter', [$parameter, $value]);
     }
@@ -434,7 +400,7 @@ class FakeApiRequestMiddleware
      * @param array $expected
      * @return boolean
      */
-    protected function validateJsonBodyParameter(ServerRequestInterface $requests, array $expected)
+    protected function validateJsonBodyParameter(ServerRequestInterface $requests,  $expected)
     {
         list($parameter, $value) = $expected;
         $body = json_decode((string)$requests->getBody(), true);
@@ -444,7 +410,7 @@ class FakeApiRequestMiddleware
      * @param array $body
      * @return self
      */
-    public function withJsonBodyParameters(array $body)
+    public function withJsonBodyParameters($body)
     {
         return $this->with('jsonBodyParameters', $body);
     }
@@ -453,7 +419,7 @@ class FakeApiRequestMiddleware
      * @param array $expected
      * @return boolean
      */
-    protected function validateJsonBodyParameters(ServerRequestInterface $requests, array $expected)
+    protected function validateJsonBodyParameters(ServerRequestInterface $requests,  $expected)
     {
         $body = json_decode((string)$requests->getBody(), true);
         return $expected === $body;
@@ -462,7 +428,7 @@ class FakeApiRequestMiddleware
      * @param string $method
      * @return self
      */
-    public function withMethod(string $method)
+    public function withMethod($method)
     {
         return $this->with('method', $method);
     }
@@ -471,7 +437,7 @@ class FakeApiRequestMiddleware
      * @param string $expected
      * @return boolean
      */
-    protected function validateMethod(ServerRequestInterface $requests, string $expected)
+    protected function validateMethod(ServerRequestInterface $requests,  $expected)
     {
         return strtolower($requests->getMethod()) === strtolower($expected);
     }
@@ -480,7 +446,7 @@ class FakeApiRequestMiddleware
      * @param callable $callback
      * @return self
      */
-    public function withCallback(callable $callback)
+    public function withCallback($callback)
     {
         return $this->with('callback', $callback);
     }
@@ -489,8 +455,40 @@ class FakeApiRequestMiddleware
      * @param callable $expected
      * @return boolean
      */
-    public function validateCallback(ServerRequestInterface $requests, callable $expected)
+    public function validateCallback(ServerRequestInterface $requests,  $expected)
     {
         return $expected($requests);
     }
+
+    // @codeCoverageIgnoreStart
+    /**
+     * @return int
+     */
+    public function getExpectedInvocationCount()
+    {
+        return $this->expectedInvocationCount;
+    }
+
+    /**
+     * @return ServerRequestInterface
+     */
+    public function getRequest()
+    {
+        return $this->request;
+    }
+    /**
+     * @return Deferred
+     */
+    public function getResponseDeferred()
+    {
+        return $this->responseDeferred;
+    }
+    /**
+     * @return PromiseInterface
+     */
+    public function getResponsePromise()
+    {
+        return $this->responsePromise;
+    }
+    // @codeCoverageIgnoreEnd
 }

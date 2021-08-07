@@ -17,20 +17,45 @@ Example Cept usage:
 
 ```php
 <?php
+$I = new ServiceGuy($scenario);
 $I->wantTo('Save some api calls for testing');
 $I->setUpstreamUrl('https://example.com');
 $I->initFakeServer();
-$loop = $I->grabFakeApiLoop();
-$I->recordRequestsForSeconds(30);
-$I->waitTillFakeApiRecordingEnds();
+$I->grabFakeApiLoop();
+$I->assertEmpty($I->grabRecordedRequests());
+$I->assertEmpty($I->grabRecordedResponses());
+$I->sendRequest('GET', '/');
+$I->waitTillNextRequestResolves();
+$I->assertNotEmpty($I->grabRecordedRequests());
+$I->assertNotEmpty($I->grabRecordedResponses());
+// Record all uncovered API call for 30 sec
+//$I->recordRequestsForSeconds(30);
+//$I->waitTillFakeApiRecordingEnds();
 $I->stopFakeApi();
-$I->saveRecordedInformation(codecept_output_dir(date('Y_m_d_H_i_s') . ".json"));
+// Save Requests if needed
+//$I->saveRecordedInformation(codecept_output_dir(date('Y_m_d_H_i_s') . ".json"));
+
 ```
 
 Example usage out side Codeception
 
 ```php
- <?php
+ // find vendor dir if possible
+$dir = __DIR__;
+$ds = DIRECTORY_SEPARATOR;
+for ($i = 0; $i < 3; $i++) {
+    $projectRootDir = dirname($dir);
+    if (!is_dir("$projectRootDir{$ds}vendor")) {
+        $dir = $projectRootDir;
+        continue;
+    }
+    include "$projectRootDir{$ds}vendor{$ds}autoload.php";
+    include "$projectRootDir{$ds}vendor{$ds}codeception{$ds}codeception{$ds}autoload.php";
+}
+
+use Codeception\Module\FakeApi;
+use Codeception\Util\Stub;
+
 $api = new FakeApi(Stub::make(\Codeception\Lib\ModuleContainer::class));
 $api->setBindPort(8081);
 $api->initFakeServer();

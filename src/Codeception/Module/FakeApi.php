@@ -2,9 +2,9 @@
 
 namespace Codeception\Module;
 
+use Codeception\Lib\Middleware\RequestExpectation;
 use Codeception\Test\Cest;
 use Codeception\Util\Stub;
-use FakeApiRequestMiddleware;
 use LeeShan87\React\MultiLoop\MultiLoop;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -176,14 +176,6 @@ class FakeApi extends \Codeception\Module
     {
         $this->test = $test;
     }
-    public function enableLog()
-    {
-        $this->doLog = true;
-    }
-    public function disableLog()
-    {
-        $this->doLog = false;
-    }
     public function reset()
     {
         $this->recordedRequests = [];
@@ -227,10 +219,12 @@ class FakeApi extends \Codeception\Module
             $this->_log("Try to bind on [$bind]");
             return new \React\Socket\Server($bind, $loop);
         } catch (\RuntimeException $e) {
+            // @codeCoverageIgnoreStart
             $this->_log($e->getMessage());
             if (is_numeric($bind) && $retry > 0) {
                 return $this->createFakeApiSocket(++$bind, $loop, --$retry);
             }
+            // @codeCoverageIgnoreEnd
         }
     }
 
@@ -339,24 +333,20 @@ class FakeApi extends \Codeception\Module
             },
         ];
         $middlewares = array_merge($middlewares, $this->getExpectedRequests());
-        $middlewares[] =
-            function (ServerRequestInterface  $request, $next) {
-                if (is_null($this->upstreamUrl)) {
-                    return $next($request);
-                }
-                $this->_log("Proxy requests to [{$this->upstreamUrl}]");
-                return $this->proxyRequest($request);
-            };
+        $middlewares[] = function (ServerRequestInterface  $request, $next) {
+            if (is_null($this->upstreamUrl)) {
+                return $next($request);
+            }
+            $this->_log("Proxy requests to [{$this->upstreamUrl}]");
+            return $this->proxyRequest($request);
+        };
         $middlewares[] = function (ServerRequestInterface  $request, $next) {
             if (!$this->hasDefinedResponses) {
                 return $next($request);
             }
             $response = array_shift($this->messages);
             if (empty($this->messages)) {
-                $this->fakeApiLoop->futureTick(function () {
-                    $this->fakeApiLoop->stop();
-                    $this->socket->close();
-                });
+                $this->messages[] = clone $response;
             }
             return $response;
         };
@@ -380,7 +370,13 @@ class FakeApi extends \Codeception\Module
             MultiLoop::tickAll();
         }
     }
-    public function waitTillNextRequestResolves(int $seconds = 20)
+
+    /**
+     *
+     * @param integer $seconds
+     * @return void
+     */
+    public function waitTillNextRequestResolves($seconds = 20)
     {
         $startTime = time();
         $maxExecutionTime = $startTime + $seconds;
@@ -389,11 +385,16 @@ class FakeApi extends \Codeception\Module
             MultiLoop::tickAll();
         }
     }
-    public function waitTillAllRequestsResolved(int $maxDelay = 20)
+    /**
+     *
+     * @param integer $maxDelay
+     * @return void
+     */
+    public function waitTillAllRequestsResolved($maxDelay = 20)
     {
         $waits = 0;
         foreach ($this->currentMiddlewares as $middleware) {
-            if ($middleware instanceof FakeApiRequestMiddleware) {
+            if ($middleware instanceof RequestExpectation) {
                 $waits += $middleware->getExpectedInvocationCount();
             }
         }
@@ -470,7 +471,7 @@ class FakeApi extends \Codeception\Module
      * @param string $content
      * @return void
      */
-    public function addMessage(int $status, array $headers, $content)
+    public function addMessage($status,  $headers, $content)
     {
         $this->hasDefinedResponses = true;
         $this->messages[] = new Response(
@@ -479,49 +480,7 @@ class FakeApi extends \Codeception\Module
             $content
         );
     }
-    /**
-     * @return void
-     */
-    public function tickFakeApiLoop()
-    {
-        if ($this->tickDisabled) {
-            return;
-        }
-        $loop = $this->fakeApiLoop;
-        $loop->futureTick(function () use ($loop) {
-            $loop->stop();
-        });
 
-        $loop->run();
-    }
-    /**
-     * @return void
-     */
-    public function run()
-    {
-        while ($this->hasMessage()) {
-            $this->tickFakeApiLoop();
-            usleep(2000);
-        }
-        $this->tickFakeApiLoop();
-    }
-    /**
-     * @param integer|null $sec
-     * @return void
-     */
-    public function recordRequestsForSeconds(?int $sec = null)
-    {
-        $this->recordingStartTime = time();
-        $recordInterval = $sec ?: $this->config['recordInterval'];
-        $this->recordInterval = $recordInterval;
-        $this->_log("Recording for [$recordInterval]");
-        if ($this->tickDisabled) {
-            return;
-        }
-        while ($this->notSeeRecordingEnded()) {
-            $this->tickFakeApiLoop();
-        }
-    }
     /**
      * @param string $method
      * @param string $url
@@ -529,7 +488,7 @@ class FakeApi extends \Codeception\Module
      * @param string $body
      * @return PromiseInterface
      */
-    public function sendRequest(string $method = 'GET', string $url = '/', ?array $headers = [], string $body = '')
+    public function sendRequest($method = 'GET',  $url = '/',  $headers = [],  $body = '')
     {
         $loop = \React\EventLoop\Factory::create();
         MultiLoop::addLoop($loop, 'client');
@@ -547,7 +506,7 @@ class FakeApi extends \Codeception\Module
      * @param array $body
      * @return PromiseInterface
      */
-    public function sendJsonRequest(string $method = 'GET', string $url = '/', ?array $headers = [], array $body = [])
+    public function sendJsonRequest($method = 'GET',  $url = '/',  $headers = [],  $body = [])
     {
         return $this->sendRequest(
             $method,
@@ -568,16 +527,29 @@ class FakeApi extends \Codeception\Module
         $this->socket->emit('connection', [$this->mockedConnection]);
         $this->mockedConnection->emit('data', [str($serverRequest)]);
     }
-    public function sendMockedRequestRaw(string $string)
+    /**
+     *
+     * @param string $string
+     * @return void
+     */
+    public function sendMockedRequestRaw($string)
     {
         $this->_log("Sending raw mocked request:\n"  . $string);
         $this->socket->emit('connection', [$this->mockedConnection]);
         $this->mockedConnection->emit('data', [$string]);
     }
+    /**
+     *
+     * @return Request
+     */
     public function grabLastRequest()
     {
         return $this->lastRequest;
     }
+    /**
+     *
+     * @return ServerRequestInterface
+     */
     public function grabLastResponse()
     {
         return $this->lastResponse;
@@ -600,7 +572,7 @@ class FakeApi extends \Codeception\Module
      * @param string $url
      * @return void
      */
-    public function setUpstreamUrl(string $url)
+    public function setUpstreamUrl($url)
     {
         $this->upstreamUrl = $url;
     }
@@ -608,15 +580,19 @@ class FakeApi extends \Codeception\Module
      * @param integer $port
      * @return void
      */
-    public function setBindPort(int $port = 8080)
+    public function setBindPort($port = 8080)
     {
         $this->bind = $port;
+    }
+    public function grabFakeApiBindPort()
+    {
+        return $this->bind;
     }
     /**
      * @param integer $sec
      * @return void
      */
-    public function setRecordInterval(int $sec)
+    public function setRecordInterval($sec)
     {
         $this->recordInterval = $sec;
     }
@@ -662,36 +638,7 @@ class FakeApi extends \Codeception\Module
     {
         return $this->proxiedRequests;
     }
-    /**
-     * @param string $file
-     * @return void
-     */
-    public function saveRecordedInformation($file)
-    {
-        $data = [];
-        foreach ($this->getRecordedRequests() as $key => $request) {
-            $data[$key] = [
-                'request' => $request,
-                'response' => $this->recordedResponses[$key]
-            ];
-        }
-        file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT));
-    }
-    /**
-     * @param string $file
-     * @return void
-     */
-    public function saveRecordedProxyedInformation($file)
-    {
-        $data = [];
-        foreach ($this->grabProxiedRequests() as $key => $request) {
-            $data[$key] = [
-                'request' => $request,
-                'response' => $this->proxiedResponses[$key]
-            ];
-        }
-        file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT));
-    }
+
     /**
      * @return string
      */
@@ -705,6 +652,67 @@ class FakeApi extends \Codeception\Module
     public function grabFakeApiLoop()
     {
         return $this->fakeApiLoop;
+    }
+
+
+    /**
+     * Stops FakeApi http server
+     *
+     * ```php
+     * <?php
+     * $I->stopFakeApi($content);
+     * ```
+     *
+     * @return void
+     */
+    public function stopFakeApi()
+    {
+        $this->socket->close();
+        MultiLoop::removeLoop('FakeApi');
+        $this->_log('Stopping FakeApi');
+        $this->hasDefinedResponses = false;
+        $this->upstreamUrl = null;
+        $this->expectedRequests = [];
+        foreach ($this->currentMiddlewares as $middleware) {
+            if ($middleware instanceof RequestExpectation) {
+                $middleware->verify();
+            }
+        }
+    }
+    /**
+     * @param int $count
+     * @return RequestExpectation
+     */
+    public function expectApiCall($count)
+    {
+        $middleware = (new RequestExpectation())->setExpectedInvocationCount($count);
+        $this->expectedRequests[] = $middleware;
+        return $middleware;
+    }
+
+    // @codeCoverageIgnoreStart
+    // Debugging helper functions
+    public function enableLog()
+    {
+        $this->doLog = true;
+    }
+    public function disableLog()
+    {
+        $this->doLog = false;
+    }
+    /**
+     * Helper function to debug log messages
+     *
+     * @param string $message
+     * @return void
+     */
+    protected function _log($message)
+    {
+        $this->debugSection($this->_getName(), $message);
+        if (!$this->doLog) {
+            return;
+        }
+        echo "\n|{$this->_getName()}| $message";
     }
     /**
      * Disable FakeApi event loop to run.
@@ -735,55 +743,81 @@ class FakeApi extends \Codeception\Module
     {
         $this->tickDisabled = false;
     }
-
     /**
-     * Stops FakeApi http server
-     *
-     * ```php
-     * <?php
-     * $I->stopFakeApi($content);
-     * ```
-     *
      * @return void
      */
-    public function stopFakeApi()
+    public function tickFakeApiLoop()
     {
-        $this->socket->close();
-        MultiLoop::removeLoop('FakeApi');
-        $this->_log('Stopping FakeApi');
-        $this->hasDefinedResponses = false;
-        $this->upstreamUrl = null;
-        $this->expectedRequests = [];
-        foreach ($this->currentMiddlewares as $middleware) {
-            if ($middleware instanceof FakeApiRequestMiddleware) {
-                $middleware->verify();
-            }
-        }
-    }
-    /**
-     * @param int $count
-     * @return \FakeApiRequestMiddleware
-     */
-    public function expectApiCall($count)
-    {
-        $middleware = (new FakeApiRequestMiddleware())->setExpectedInvocationCount($count);
-        $this->expectedRequests[] = $middleware;
-        return $middleware;
-    }
-    /**
-     * Helper function to debug log messages
-     *
-     * @param string $message
-     * @return void
-     */
-    protected function _log($message)
-    {
-        $this->debugSection($this->_getName(), $message);
-        if (!$this->doLog) {
+        if ($this->tickDisabled) {
             return;
         }
-        echo "\n|{$this->_getName()}| $message";
+        $loop = $this->fakeApiLoop;
+        $loop->futureTick(function () use ($loop) {
+            $loop->stop();
+        });
+
+        $loop->run();
     }
+    /**
+     * @return void
+     */
+    public function run()
+    {
+        while ($this->hasMessage()) {
+            $this->tickFakeApiLoop();
+            usleep(2000);
+        }
+        $this->tickFakeApiLoop();
+    }
+    /**
+     * @param integer|null $sec
+     * @return void
+     */
+    public function recordRequestsForSeconds($sec = null)
+    {
+        $this->recordingStartTime = time();
+        $recordInterval = $sec ?: $this->config['recordInterval'];
+        $this->recordInterval = $recordInterval;
+        $this->_log("Recording for [$recordInterval]");
+        // @codeCoverageIgnoreStart
+        if ($this->tickDisabled) {
+            return;
+        }
+        while ($this->notSeeRecordingEnded()) {
+            $this->tickFakeApiLoop();
+        }
+    }
+
+    /**
+     * @param string $file
+     * @return void
+     */
+    public function saveRecordedInformation($file)
+    {
+        $data = [];
+        foreach ($this->getRecordedRequests() as $key => $request) {
+            $data[$key] = [
+                'request' => $request,
+                'response' => $this->recordedResponses[$key]
+            ];
+        }
+        file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT));
+    }
+    /**
+     * @param string $file
+     * @return void
+     */
+    public function saveRecordedProxyedInformation($file)
+    {
+        $data = [];
+        foreach ($this->grabProxiedRequests() as $key => $request) {
+            $data[$key] = [
+                'request' => $request,
+                'response' => $this->proxiedResponses[$key]
+            ];
+        }
+        file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT));
+    }
+    // @codeCoverageIgnoreEnd
+
 }
-/*
-*/
