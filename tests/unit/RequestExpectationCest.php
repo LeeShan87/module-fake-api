@@ -512,4 +512,97 @@ class RequestExpectationCest extends BaseCest
         //$this->_validateRequest($I);
         $this->_validateRequestExpectationFailed($I);
     }
+
+    public function willReturnJsonResponse(ServiceGuy $I)
+    {
+        $I->wantTo('Send Request and expecting json response');
+        $I->expectApiCall(1)->withUrl('/')->willReturnJsonResponse(200, [], ['result' => 'ok']);
+        $expectedResponse = new Response(200, [], json_encode(['result' => 'ok']));
+        $I->initFakeServer();
+        $I->assertNull($I->grabLastRequest());
+        $I->assertNull($I->grabLastResponse());
+        $request = new ServerRequest('POST', 'http://example.com');
+        $I->sendMockedRequest($request);
+        $this->_validateRequestWithResponse($I, $request, $expectedResponse);
+        $I->assertEmpty($I->grabProxiedRequests());
+        $I->assertEmpty($I->grabProxiedResponses());
+        $actualResponse = $I->grabLastResponse();
+        $responseJson = json_decode((string)$actualResponse->getBody(), true);
+        $I->assertEquals(['result' => 'ok'], $responseJson);
+    }
+
+    public function willReturnResponse(ServiceGuy $I)
+    {
+        $I->wantTo('Send Request and expecting response');
+        $expectedQuery = http_build_query(['result' => 'ok']);
+        $I->expectApiCall(1)->withUrl('/')->willReturnResponse(200, [], $expectedQuery);
+        $expectedResponse = new Response(200, [], $expectedQuery);
+        $I->initFakeServer();
+        $I->assertNull($I->grabLastRequest());
+        $I->assertNull($I->grabLastResponse());
+        $request = new ServerRequest('POST', 'http://example.com');
+        $I->sendMockedRequest($request);
+        $this->_validateRequestWithResponse($I, $request, $expectedResponse);
+        $I->assertEmpty($I->grabProxiedRequests());
+        $I->assertEmpty($I->grabProxiedResponses());
+        $actualResponse = $I->grabLastResponse();
+        $I->assertEquals($expectedQuery, (string)$actualResponse->getBody());
+    }
+    public function testWaitTillAllRequestResolves(ServiceGuy $I)
+    {
+        $I->wantTo('Test wait till all request resolves feature');
+        $I->expectApiCall(1)->withUrl('/');
+        $I->expectApiCall(1)->withUrl('/a');
+        $I->expectApiCall(1)->withUrl('/b');
+        $I->expectApiCall(1)->withUrl('/c');
+        $I->initFakeServer();
+        $I->sendRequest('POST', '/');
+        $I->sendRequest('POST', '/a');
+        $I->sendRequest('POST', '/b');
+        $I->sendRequest('POST', '/c');
+        $I->waitTillAllRequestsResolved(2);
+        $recordedRequests = $I->grabRecordedRequests();
+        $recordedResponses = $I->grabRecordedResponses();
+        $I->assertNotEmpty($recordedRequests);
+        $I->assertNotEmpty($recordedResponses);
+        $I->assertCount(4, $recordedRequests);
+        $I->assertCount(4, $recordedResponses);
+        $I->stopFakeApi();
+    }
+
+    public function testWaitTillAllRequestResolvesWhenNotResolves(ServiceGuy $I)
+    {
+        $I->wantTo('Test wait till all request resolves feature when something not resolves');
+        $I->expectApiCall(1)->withUrl('/');
+        $I->expectApiCall(1)->withUrl('/a');
+        $I->expectApiCall(1)->withUrl('/b');
+        $I->expectApiCall(1)->withUrl('/c');
+        $I->initFakeServer();
+        $I->sendRequest('POST', '/');
+        $I->sendRequest('POST', '/a');
+        $I->sendRequest('POST', '/b');
+        //$I->enableLog();
+        $I->waitTillAllRequestsResolved(2);
+        //$I->disableLog();
+        $recordedRequests = $I->grabRecordedRequests();
+        $recordedResponses = $I->grabRecordedResponses();
+        $I->assertNotEmpty($recordedRequests);
+        $I->assertNotEmpty($recordedResponses);
+        $I->assertCount(3, $recordedRequests);
+        $I->assertCount(3, $recordedResponses);
+        $this->_validateRequestExpectationFailed($I);
+    }
+    public function testWaitTillAllRequestResolvesWhenNothingToResolve(ServiceGuy $I)
+    {
+        $I->wantTo('Test wait till all request resolves feature when nothing to resolve');
+        $I->initFakeServer();
+        $I->enableLog();
+        $I->waitTillAllRequestsResolved(2);
+        $I->disableLog();
+        $recordedRequests = $I->grabRecordedRequests();
+        $recordedResponses = $I->grabRecordedResponses();
+        $I->assertEmpty($recordedRequests);
+        $I->assertEmpty($recordedResponses);
+        $I->stopFakeApi();
+    }
 }

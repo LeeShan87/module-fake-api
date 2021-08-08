@@ -460,7 +460,6 @@ class RequestExpectation
         return $expected($requests);
     }
 
-    // @codeCoverageIgnoreStart
     /**
      * @return int
      */
@@ -468,7 +467,11 @@ class RequestExpectation
     {
         return $this->expectedInvocationCount;
     }
-
+    public function getInvocationCounter()
+    {
+        return $this->invocationCounter;
+    }
+    // @codeCoverageIgnoreStart
     /**
      * @return ServerRequestInterface
      */

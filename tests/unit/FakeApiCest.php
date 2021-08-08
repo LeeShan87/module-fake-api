@@ -13,15 +13,46 @@ class FakeApiCest extends BaseCest
     public function shouldBindNextPort(ServiceGuy $I)
     {
         $I->wantTo('Bind next port if FakeApi port is under use');
+        $originalBind = $I->grabFakeApiBindPort();
+        $I->setFakeApiBindPort(11180);
         $loop = Factory::create();
-        $server = new \React\Socket\Server('8080', $loop);
-        $server2 = new \React\Socket\Server('8081', $loop);
+        $server = new \React\Socket\Server('11180', $loop);
+        $server2 = new \React\Socket\Server('11181', $loop);
         $I->initFakeServer();
         $fakeApiUrl = $I->grabFakeApiUrl();
-        $I->assertStringContainsString('8082', $fakeApiUrl);
+        $I->assertStringContainsString('11182', $fakeApiUrl);
+        $I->setFakeApiBindPort($originalBind);
         $server->close();
         $server2->close();
+        $I->stopFakeApi();
     }
+
+    public function shouldThrowExceptionWhenAllPortsUsed(ServiceGuy $I)
+    {
+        $I->wantTo('Bind next port if FakeApi port is under use');
+        $originalBind = $I->grabFakeApiBindPort();
+        $bindStart = 22280;
+        $I->setFakeApiBindPort($bindStart);
+        $loop = Factory::create();
+        $servers = [];
+        for ($i = 0; $i < 11; $i++) {
+            $servers[] = new \React\Socket\Server($bindStart + $i, $loop);
+        }
+        try {
+            $I->initFakeServer();
+            $I->fail("Exception should happened");
+        } catch (\Throwable $e) {
+            $I->assertInstanceOf("\RuntimeException", $e);
+            $I->assertStringContainsString('Failed to listen on', $e->getMessage());
+        } finally {
+            foreach ($servers as $server) {
+                $server->close();
+            }
+            $I->stopFakeApi();
+            $I->setFakeApiBindPort($originalBind);
+        }
+    }
+
     public function sendMockedRequestNoFeatureEnabled(ServiceGuy $I)
     {
         $I->wantTo('Send Request when no feature enabled');
@@ -34,22 +65,13 @@ class FakeApiCest extends BaseCest
         $I->assertEmpty($I->grabProxiedRequests());
         $I->assertEmpty($I->grabProxiedResponses());
     }
-
-    public function willReturnJsonResponse(ServiceGuy $I)
+    public function testWaitForSeconds(ServiceGuy $I)
     {
-        $I->wantTo('Send Request and expecting json response');
-        $I->expectApiCall(1)->withUrl('/')->willReturnJsonResponse(200, [], ['result' => 'ok']);
-        $expectedResponse = new Response(200, [], json_encode(['result' => 'ok']));
+        $I->wantTo('Test Async wait for seconds');
+        $startTime = time();
         $I->initFakeServer();
-        $I->assertNull($I->grabLastRequest());
-        $I->assertNull($I->grabLastResponse());
-        $request = new ServerRequest('POST', 'http://example.com');
-        $I->sendMockedRequest($request);
-        $this->_validateRequestWithResponse($I, $request, $expectedResponse);
-        $I->assertEmpty($I->grabProxiedRequests());
-        $I->assertEmpty($I->grabProxiedResponses());
-        $actualResponse = $I->grabLastResponse();
-        $responseJson = json_decode((string)$actualResponse->getBody(), true);
-        $I->assertEquals(['result' => 'ok'], $responseJson);
+        $I->waitForSeconds(2);
+        $I->stopFakeApi();
+        $I->assertGreaterOrEquals($startTime + 1, time());
     }
 }
