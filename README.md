@@ -21,7 +21,6 @@ $I = new ServiceGuy($scenario);
 $I->wantTo('Save some api calls for testing');
 $I->setUpstreamUrl('https://example.com');
 $I->initFakeServer();
-$I->grabFakeApiLoop();
 $I->assertEmpty($I->grabRecordedRequests());
 $I->assertEmpty($I->grabRecordedResponses());
 $I->sendRequest('GET', '/');

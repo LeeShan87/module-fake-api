@@ -2,9 +2,11 @@
 
 $I = new ServiceGuy($scenario);
 $I->wantTo('Save some api calls for testing');
-$I->setUpstreamUrl('https://example.com');
+// We don't want to bombard a website, that we do not have rights to test.
+//$I->setUpstreamUrl('https://example.com');
+$I->createEchoUpstream(1234);
+$I->setUpstreamUrl($I->grabEchoServiceUrl());
 $I->initFakeServer();
-$I->grabFakeApiLoop();
 $I->assertEmpty($I->grabRecordedRequests());
 $I->assertEmpty($I->grabRecordedResponses());
 $I->sendRequest('GET', '/');

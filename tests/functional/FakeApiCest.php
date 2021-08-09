@@ -7,7 +7,7 @@ use RingCentral\Psr7\ServerRequest;
 
 use function RingCentral\Psr7\str;
 
-class FakeApiCest extends BaseCest
+class FakeApiCest extends \BaseCest
 {
     // tests
     public function shouldBindNextPort(ServiceGuy $I)
@@ -29,7 +29,7 @@ class FakeApiCest extends BaseCest
 
     public function shouldThrowExceptionWhenAllPortsUsed(ServiceGuy $I)
     {
-        $I->wantTo('Bind next port if FakeApi port is under use');
+        $I->wantTo('See exception thrown when all bindable ports are used');
         $originalBind = $I->grabFakeApiBindPort();
         $bindStart = 22280;
         $I->setFakeApiBindPort($bindStart);
@@ -41,6 +41,9 @@ class FakeApiCest extends BaseCest
         try {
             $I->initFakeServer();
             $I->fail("Exception should happened");
+        } catch (\Exception $e) {
+            $I->assertInstanceOf("\RuntimeException", $e);
+            $I->assertStringContainsString('Failed to listen on', $e->getMessage());
         } catch (\Throwable $e) {
             $I->assertInstanceOf("\RuntimeException", $e);
             $I->assertStringContainsString('Failed to listen on', $e->getMessage());

@@ -99,7 +99,6 @@ class RequestExpectation
             }
             $response = !is_null($response) ? $response : $next($request);
             if (!$this->responseDeferredResolved) {
-                $doneDeferred = new Deferred();
                 $this->responseDeferred->resolve($response);
                 $this->responseDeferredResolved = true;
                 return new Promise(function ($resolve, $reject) use ($request, $next) {
@@ -354,6 +353,45 @@ class RequestExpectation
         $headers = $requests->getHeaders();
         return $expected === $headers;
     }
+    /**
+     * @param string $parameter
+     * @param string $value
+     * @return self
+     */
+    public function withCookie($parameter, $value)
+    {
+        return $this->with('cookie', [$parameter, $value]);
+    }
+    /**
+     * @param ServerRequestInterface $requests
+     * @param array $expected
+     * @return boolean
+     */
+    protected function validateCookie(ServerRequestInterface $requests,  $expected)
+    {
+        list($name, $value) = $expected;
+        $cookies = $requests->getCookieParams();
+        return isset($cookies[$name]) && $cookies[$name] === $value;
+    }
+    /**
+     * @param array $cookies
+     * @return self
+     */
+    public function withCookies($cookies)
+    {
+        return $this->with('cookies', $cookies);
+    }
+    /**
+     * @param ServerRequestInterface $requests
+     * @param array $expected
+     * @return boolean
+     */
+    protected function validateCookies(ServerRequestInterface $requests,  $expected)
+    {
+        $cookies = $requests->getCookieParams();
+        return  $cookies === $expected;
+    }
+
     /**
      * @param string $parameter
      * @param string $value

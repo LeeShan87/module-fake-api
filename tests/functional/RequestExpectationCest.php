@@ -184,6 +184,75 @@ class RequestExpectationCest extends BaseCest
         $this->_validateRequestExpectationFailed($I, $request);
     }
 
+    public function expectCookie(ServiceGuy $I)
+    {
+        $I->wantTo('Send Request when expecting a Cookie');
+        $request = (new ServerRequest('POST', 'http://example.com'))->withCookieParams(['foo' => 'bar']);
+        $expectedRequest = $I->expectApiCall(1)->withCookie('foo', 'bar');
+        $expectedResponse = $expectedRequest->willReturn(new Response(222))->getDefinedResponse();
+        $I->initFakeServer();
+        $I->sendMockedRequestRaw("POST / HTTP/1.0\r\nCookie: foo=bar\r\n\r\n");
+        $grabbedRequest = $I->grabLastRequest();
+        $I->stopFakeApi();
+        $I->assertEquals($request->getMethod(), $grabbedRequest->getMethod());
+    }
+    public function expectCookieShouldFail(ServiceGuy $I)
+    {
+        $I->wantTo('Send Request when expecting a Cookie should fail');
+        $request = new ServerRequest('POST', 'http://example.com');
+        $expectedRequest = $I->expectApiCall(1)->withCookie('baz', 'bar');
+        $I->sendMockedRequestRaw("POST / HTTP/1.0\r\nCookie: foo=bar\r\n\r\n");
+        $expectedResponse = $expectedRequest->willReturn(new Response(222))->getDefinedResponse();
+        $I->initFakeServer();
+        $I->sendMockedRequest($request);
+        $this->_validateRequestExpectationFailed($I, $request);
+    }
+    public function expectMultipleCookies(ServiceGuy $I)
+    {
+        $I->wantTo('Send Request when expecting multiple Cookies');
+        $request = (new ServerRequest('POST', 'http://example.com'))->withCookieParams(['foo' => 'bar', 'bar' => 'foo']);
+        $expectedRequest = $I->expectApiCall(1)->withCookie('foo', 'bar')->withCookie('bar', 'foo');
+        $expectedResponse = $expectedRequest->willReturn(new Response(222))->getDefinedResponse();
+        $I->initFakeServer();
+        $I->sendMockedRequestRaw("POST / HTTP/1.0\r\nCookie: foo=bar; bar=foo;\r\n\r\n");
+        $grabbedRequest = $I->grabLastRequest();
+        $I->stopFakeApi();
+        $I->assertEquals($request->getMethod(), $grabbedRequest->getMethod());
+    }
+    public function expectMultipleCookiesShouldFail(ServiceGuy $I)
+    {
+        $I->wantTo('Send Request when expecting multiple Cookies should fail');
+        $request = (new ServerRequest('POST', 'http://example.com'))->withCookieParams(['foo' => 'bar']);
+        $I->sendMockedRequestRaw("POST / HTTP/1.0\r\nCookie: foo=bar;\r\n\r\n");
+        $expectedRequest = $I->expectApiCall(1)->withCookie('foo', 'bar');
+        $expectedResponse = $expectedRequest->willReturn(new Response(222))->getDefinedResponse();
+        $I->initFakeServer();
+        $I->sendMockedRequest($request);
+        $this->_validateRequestExpectationFailed($I, $request);
+    }
+    public function expectCookies(ServiceGuy $I)
+    {
+        $I->wantTo('Send Request when expecting Cookies');
+        $request = new ServerRequest('POST', 'http://example.com');
+        $expectedRequest = $I->expectApiCall(1)->withCookies(['foo' => 'bar', 'bar' => 'foo']);
+        $expectedResponse = $expectedRequest->willReturn(new Response(222))->getDefinedResponse();
+        $I->initFakeServer();
+        $I->sendMockedRequestRaw("POST / HTTP/1.0\r\nCookie: foo=bar; bar=foo;\r\n\r\n");
+        $grabbedRequest = $I->grabLastRequest();
+        $I->stopFakeApi();
+        $I->assertEquals($request->getMethod(), $grabbedRequest->getMethod());
+    }
+    public function expectCookiesShouldFail(ServiceGuy $I)
+    {
+        $I->wantTo('Send Request when expecting Cookies should fail');
+        $request = (new ServerRequest('POST', 'http://example.com'));
+        $I->sendMockedRequestRaw("POST / HTTP/1.0\r\nCookie: foo=bar;\r\n\r\n");
+        $expectedRequest = $I->expectApiCall(1)->withCookies(['foo' => 'bar', 'bar' => 'foo']);
+        $expectedResponse = $expectedRequest->willReturn(new Response(222))->getDefinedResponse();
+        $I->initFakeServer();
+        $I->sendMockedRequest($request);
+        $this->_validateRequestExpectationFailed($I, $request);
+    }
     public function expectQueryParameter(ServiceGuy $I)
     {
         $I->wantTo('Send Request when expecting a get parameter');

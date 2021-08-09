@@ -51,4 +51,11 @@ class AddRequest
             $content
         );
     }
+    /**
+     * @return void
+     */
+    public function flushMessages()
+    {
+        $this->messages = [];
+    }
 }

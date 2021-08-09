@@ -136,4 +136,12 @@ class ProxyRequest
     {
         return $this->proxiedRequests;
     }
+    /**
+     * @return void
+     */
+    public function flushProxiedRequests()
+    {
+        $this->proxiedRequests = [];
+        $this->proxiedResponses = [];
+    }
 }

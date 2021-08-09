@@ -109,6 +109,16 @@ class RequestRecorder
     }
 
     /**
+     * @return void
+     */
+    public function flushRecordedRequests()
+    {
+        $this->recordedRequests = [];
+        $this->recordedResponses = [];
+        $this->lastRequest = null;
+        $this->lastResponse = null;
+    }
+    /**
      * Helper function to debug log messages
      *
      * @param string $message
