@@ -103,7 +103,7 @@ Response;
     public function testProxyRequestWhenEchoUpstreamNotEnabled(ServiceGuy $I)
     {
         $I->wantTo("Test proxy to a service not available");
-        if (version_compare(phpversion(), '5.6', '<')) {
+        if (version_compare(phpversion(), '7.0', '<')) {
             $I->markTestSkipped("Socket timeout is tricky on php 5.6");
         }
         $I->setUpstreamUrl("http://localhost:43334");
@@ -181,7 +181,7 @@ Response;
     public function testProxyRequestWhenUpstreamTimeout(ServiceGuy $I)
     {
         $I->wantTo("Test proxy to a service that timeouts");
-        if (version_compare(phpversion(), '5.6', '<')) {
+        if (version_compare(phpversion(), '7.0', '<')) {
             $I->markTestSkipped("Socket timeout is tricky on php 5.6");
         }
         $I->createEchoUpstream(33334);
