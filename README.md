@@ -1,7 +1,7 @@
 # LeeShan87/module-fake-api
 
 [![CI status](https://github.com/LeeShan87/module-fake-api/workflows/CI/badge.svg)](https://github.com/LeeShan87/module-fake-api/actions)
-[![Installs on Packagist](https://img.shields.io/packagist/dt/leeshan87/module-fake-apicolor=blue&label=installs%20on%20Packagist)](https://packagist.org/packages/LeeShan87/module-fake-api)
+[![Installs on Packagist](https://img.shields.io/packagist/dt/leeshan87/module-fake-api?color=blue&label=installs%20on%20Packagist)](https://packagist.org/packages/LeeShan87/module-fake-api)
 
 Asynchronous Fake Api module for Codeception.
 
