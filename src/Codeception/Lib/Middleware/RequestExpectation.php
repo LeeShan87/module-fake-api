@@ -61,6 +61,11 @@ class RequestExpectation
         $this->setNext($next);
         return $this->invoke($request, $next);
     }
+
+    public function __toString()
+    {
+        return var_export($this->validationRules, true);
+    }
     /**
      * @param int $count
      * @return self
@@ -82,8 +87,66 @@ class RequestExpectation
             $this->expectedInvocationCount,
             $this->invocationCounter,
             "Api endpoint was not called at least [{$this->expectedInvocationCount}] actual [{$this->invocationCounter}]\n" .
-                "Endpoint requirements [" . var_export($this->validationRules, true) . "]"
+                "Endpoint requirements [{$this}]"
         );
+    }
+    /**
+     *
+     * @param integer $count
+     * @return self
+     */
+    public function exactly($count)
+    {
+        $this->expectedInvocationCount = $count;
+        $this->willAlterResponse()->then(function ($response) use (&$count) {
+            if ($this->invocationCounter > $this->expectedInvocationCount) {
+                Assert::fail(
+                    "Api endpoint was called more than {$this->expectedInvocationCount}\n" .
+                        "Endpoint requirements [{$this}]"
+                );
+            }
+        });
+        return $this;
+    }
+    /**
+     * @return self
+     */
+    public function never()
+    {
+        return $this->exactly(0);
+    }
+    /**
+     *
+     * @return self
+     */
+    public function once()
+    {
+        return $this->exactly(1);
+    }
+    /**
+     *
+     * @return self
+     */
+    public function any()
+    {
+        $this->expectedInvocationCount = 0;
+        return $this;
+    }
+    /**
+     * @param int $count
+     * @return self
+     */
+    public function atLeast($count)
+    {
+        $this->expectedInvocationCount = $count;
+        return $this;
+    }
+    /**
+     * @return self
+     */
+    public function atLeastOnce()
+    {
+        return $this->atLeast(1);
     }
     /**
      * @param ServerRequestInterface $request
