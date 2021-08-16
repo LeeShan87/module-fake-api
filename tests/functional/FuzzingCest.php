@@ -142,6 +142,18 @@ class FuzzingCest extends BaseCest
         $I->assertEquals(220, $response->getStatusCode());
         $I->assertEquals(['world'], $response->getHeader('message'));
 
+        $middleware->willAlterResponse()->then(function ($response) use ($I, $middleware) {
+            $alteredResponse = $response->withStatus(220)->withAddedHeader('message', 'world!');
+            $middleware->addAlteredResponse($alteredResponse);
+            $I->assertNotNull($response);
+            $I->assertEquals(404, $response->getStatusCode());
+        });
+        $I->sendRequest('GET', '/hello');
+        $I->waitTillNextRequestResolves();
+        $response = $I->grabLastResponse();
+        $I->assertEquals(220, $response->getStatusCode());
+        $I->assertEquals(['world!'], $response->getHeader('message'));
+
         $I->sendRequest('GET', '/hello');
         $I->waitTillNextRequestResolves();
         $response = $I->grabLastResponse();

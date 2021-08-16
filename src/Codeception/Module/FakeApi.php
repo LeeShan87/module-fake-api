@@ -641,11 +641,11 @@ class FakeApi extends \Codeception\Module
     }
     /**
      * @param int $count
-     * @return RequestExpectation
+     * @return \Codeception\Lib\Middleware\RequestExpectation
      */
-    public function expectApiCall($count)
+    public function expectApiCall($count = 0)
     {
-        $middleware = (new RequestExpectation())->setExpectedInvocationCount($count);
+        $middleware = (new RequestExpectation())->atLeast($count);
         $this->expectedRequests[] = $middleware;
         return $middleware;
     }
