@@ -2,6 +2,7 @@
 
 namespace Codeception\Lib\Middleware;
 
+use LeeShan87\React\MultiLoop\MultiLoop;
 use PHPUnit\Framework\Assert;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Message\Response;
@@ -55,11 +56,26 @@ class RequestExpectation
      */
     protected $expectedInvocationCount = 0;
     protected $alteredResponses = [];
+
+    /**
+     *
+     * @var string
+     */
+    protected $verificationMethod = 'assertGreaterThanOrEqual';
+    /**
+     * @var string
+     */
+    protected $verificationMessage;
     public function __invoke(ServerRequestInterface  $request, $next)
     {
         $this->setRequest($request);
         $this->setNext($next);
         return $this->invoke($request, $next);
+    }
+
+    public function __toString()
+    {
+        return var_export($this->validationRules, true);
     }
     /**
      * @param int $count
@@ -71,6 +87,33 @@ class RequestExpectation
         return $this;
     }
     /**
+     * @return string
+     */
+    public function grabVerificationMessage()
+    {
+        return $this->verificationMessage;
+    }
+    /**
+     *
+     * @param string $message
+     * @return self
+     */
+    public function setVerificationMessage($message)
+    {
+        $this->verificationMessage = $message;
+        return $this;
+    }
+    /**
+     *
+     * @param string $method
+     * @return self
+     */
+    public function setVerificationMethod($method)
+    {
+        $this->verificationMethod = $method;
+        return $this;
+    }
+    /**
      * Verify if the middleware has invoked at least expected count.
      *
      * @throws \PHPUnit\Framework\ExpectationFailedException
@@ -78,12 +121,87 @@ class RequestExpectation
      */
     public function verify()
     {
-        Assert::assertGreaterThanOrEqual(
+        $method = $this->verificationMethod;
+        $this->_log("Verifying API expectation method [$method] expected count [{$this->expectedInvocationCount}] actual count [{$this->invocationCounter}]");
+        Assert::$method(
             $this->expectedInvocationCount,
             $this->invocationCounter,
-            "Api endpoint was not called at least [{$this->expectedInvocationCount}] actual [{$this->invocationCounter}]\n" .
-                "Endpoint requirements [" . var_export($this->validationRules, true) . "]"
+            $this->verificationMessage
         );
+    }
+    /**
+     *
+     * @param integer $count
+     * @return self
+     */
+    public function exactly($count)
+    {
+        $this->setExpectedInvocationCount($count);
+        $this->setVerificationMessage("Api endpoint was called not exactly {$this->expectedInvocationCount}\n" .
+            "Endpoint requirements [{$this}]");
+        $this->setVerificationMethod('assertEquals');
+        $this->countExactly();
+        return $this;
+    }
+    protected function countExactly()
+    {
+        $this->willAlterResponse()->then(function ($response) {
+            if (($this->invocationCounter + 1) > $this->expectedInvocationCount) {
+                Assert::fail(
+                    "Api endpoint was called more than {$this->expectedInvocationCount}\n" .
+                        "Endpoint requirements [{$this}]"
+                );
+            }
+            $this->addAlteredResponse($response);
+            $this->expectedInvocationCount--;
+            $fakeApiLoop = MultiLoop::getLoops()['FakeApi'];
+            $fakeApiLoop->futureTick(function () {
+                $this->countExactly();
+            });
+        });
+    }
+    /**
+     * @return self
+     */
+    public function never()
+    {
+        return $this->exactly(0);
+    }
+    /**
+     *
+     * @return self
+     */
+    public function once()
+    {
+        return $this->exactly(1);
+    }
+    /**
+     *
+     * @return self
+     */
+    public function any()
+    {
+        $this->expectedInvocationCount = 0;
+        return $this;
+    }
+    /**
+     * @param int $count
+     * @return self
+     */
+    public function atLeast($count)
+    {
+        $this->setExpectedInvocationCount($count);
+        $this->setVerificationMessage("Api endpoint was not called at least [{$this->expectedInvocationCount}] actual [{$this->invocationCounter}]\n" .
+            "Endpoint requirements [{$this}]");
+        $this->setVerificationMethod('assertGreaterThanOrEqual');
+        return $this;
+    }
+    /**
+     * @return self
+     */
+    public function atLeastOnce()
+    {
+        return $this->atLeast(1);
     }
     /**
      * @param ServerRequestInterface $request
