@@ -26,9 +26,8 @@ class ProxyCest extends BaseCest
         $expectedResponse = <<<Response
 POST /v2/authentication/login/license HTTP/1.1\r
 Host: 127.0.0.1:8081\r
-User-Agent: ReactPHP/1\r
-Connection: close\r
 Content-Type: application/json\r
+User-Agent: ReactPHP/1\r
 Content-Length: 29\r
 \r
 {"licenseKey":"some_license"}
