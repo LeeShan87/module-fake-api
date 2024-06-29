@@ -25,10 +25,16 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          coverage: xdebug
+          coverage: none
           ini-file: development
-      - run: composer install
-      - run: vendor/bin/phpunit --coverage-text
-        if: ${{ matrix.php >= 7.3 }}
-      - run: vendor/bin/phpunit --coverage-text -c phpunit.xml.legacy
-        if: ${{ matrix.php < 7.3 }}
+      - name: Validate composer.json and composer.lock
+        run: composer validate
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction --no-suggest
+
+      - name: Run Lint
+        run: php vendor/bin/phplint --no-cache --no-interaction
+
+      - name: Run test suite
+        run: php vendor/bin/codecept run
